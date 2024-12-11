@@ -57,6 +57,7 @@ setup_directories() {
 
 check_dependencies() {
     # 添加OpenSSL检查
+    check_libssl
     check_openssl_version || exit 1
 
     if ! command -v tmux &> /dev/null; then
@@ -77,6 +78,25 @@ check_dependencies() {
                 exit 1
             fi
         fi
+    fi
+
+    
+}
+
+check_libssl() {
+    # 检查 libssl1.1 是否已安装
+    if ! dpkg -l | grep -q libssl1.1; then
+        echo -e "${YELLOW}libssl1.1 未安装，正在安装...${NC}"
+        wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+        sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+        sudo apt --fix-broken install
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}libssl1.1 安装成功${NC}"
+        else
+            echo -e "${RED}libssl1.1 安装失败${NC}"
+        fi
+    else
+        echo -e "${GREEN}libssl1.1 已安装${NC}"
     fi
 }
 
@@ -190,7 +210,7 @@ start_prover() {
 
 check_status() {
     if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-        echo -e "${GREEN}Prover 正在运行中. 正在打开日志窗口...${NC}"
+        echo -e "${GREEN}Prover 正在运行���. 正在打开日志窗口...${NC}"
         echo -e "${YELLOW}提示: 查看完成后直接关闭终端即可，不要使用 Ctrl+C${NC}"
         sleep 2
         tmux attach-session -t "$SESSION_NAME"
